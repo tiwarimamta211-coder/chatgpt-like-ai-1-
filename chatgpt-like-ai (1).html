@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AuraAI — Smart Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Söhne:wght@300;400;500;600&family=Söhne+Mono&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+/* ═══════════════════════════════════════
+   RESET & ROOT
+═══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sidebar-bg:   #171717;
+  --main-bg:      #212121;
+  --input-bg:     #2f2f2f;
+  --hover:        #2a2a2a;
+  --hover2:       #3a3a3a;
+  --active:       #303030;
+  --border:       #3a3a3a;
+  --border2:      #4a4a4a;
+  --text:         #ececec;
+  --text2:        #8e8ea0;
+  --text3:        #5a5a6a;
+  --green:        #10a37f;
+  --green-glow:   rgba(16,163,127,.2);
+  --green-light:  rgba(16,163,127,.1);
+  --red:          #ef4444;
+  --user-bg:      #2a2a2a;
+  --r:            12px;
+  --sidebar-w:    260px;
+  --transition:   .2s cubic-bezier(.4,0,.2,1);
+}
+
+html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif; }
+body { background: var(--main-bg); color: var(--text); display: flex; }
+
+/* ═══════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+
+/* ═══════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 12px 8px;
+  gap: 2px;
+  transition: transform var(--transition), width var(--transition);
+  overflow: hidden;
+  position: relative;
+  z-index: 50;
+}
+.sidebar.collapsed { width: 0; padding: 0; overflow: hidden; }
+
+/* Logo */
+.sb-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 8px 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+.sb-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: .95rem; font-weight: 600; color: var(--text);
+  letter-spacing: -.01em; white-space: nowrap;
+}
+.sb-logo-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--green);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sb-logo-icon svg { width: 18px; height: 18px; }
+
+.sb-icon-btn {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text2); display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+.sb-icon-btn:hover { background: var(--hover2); color: var(--text); }
+.sb-icon-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* New chat */
+.sb-new {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: .85rem; font-weight: 500;
+  transition: all var(--transition); flex-shrink: 0;
+  white-space: nowrap;
+}
+.sb-new:hover { background: var(--hover); border-color: var(--border2); color: var(--text); }
+.sb-new svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; flex-shrink: 0; }
+
+/* Search */
+.sb-search {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+  background: var(--hover); border-radius: 8px;
+  border: 1px solid transparent; flex-shrink: 0;
+  transition: border-color var(--transition);
+}
+.sb-search:focus-within { border-color: var(--border2); }
+.sb-search svg { width: 13px; height: 13px; stroke: var(--text3); fill: none; stroke-width: 2; flex-shrink: 0; }
+.sb-search input {
+  flex: 1; background: none; border: none; outline: none;
+  font-family: 'DM Sans', sans-serif; font-size: .8rem;
+  color: var(--text); min-width: 0;
+}
+.sb-search input::placeholder { color: var(--text3); }
+
+/* Section labels */
+.sb-label {
+  padding: 8px 10px 4px;
+  font-size: .68rem; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text3);
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* Chat list */
+.sb-list { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.sb-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px;
+  border-radius: 8px; cursor: pointer;
+  transition: background var(--transition);
+  position: relative; group: true;
+}
+.sb-item:hover { background: var(--hover); }
+.sb-item.active { background: var(--active); }
+.sb-item-ico { font-size: .78rem; opacity: .5; flex-shrink: 0; }
+.sb-item-txt {
+  flex: 1; font-size: .82rem; color: var(--text2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+}
+.sb-item.active .sb-item-txt { color: var(--text); }
+.sb-item-del {
+  display: none; background: none; border: none;
+  color: var(--text3); cursor: pointer; padding: 2px 4px;
+  border-radius: 4px; font-size: .7rem;
+  transition: color var(--transition); flex-shrink: 0;
+}
+.sb-item:hover .sb-item-del { display: flex; align-items: center; }
+.sb-item-del:hover { color: var(--red); }
+
+/* Sidebar footer */
+.sb-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 10px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.sb-foot-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 8px;
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: .83rem;
+  color: var(--text2); transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+.sb-foot-btn:hover { background: var(--hover); color: var(--text); }
+.sb-foot-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+.sb-version { font-size: .7rem; color: var(--text3); padding: 4px 10px; }
+
+/* ═══════════════════════════════════════
+   MAIN AREA
+═══════════════════════════════════════ */
+.main {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden; background: var(--main-bg); min-width: 0;
+}
+
+/* Top bar */
+.topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0; background: var(--main-bg);
+}
+.tb-toggle {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text2); display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition), color var(--transition); flex-shrink: 0;
+}
+.tb-toggle:hover { background: var(--hover2); color: var(--text); }
+.tb-toggle svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* Model selector */
+.model-selector-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 8px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: .85rem; font-weight: 500;
+  transition: all var(--transition); position: relative;
+}
+.model-selector-btn:hover { background: var(--hover); border-color: var(--border2); }
+.model-selector-btn .chevron { font-size: .65rem; color: var(--text2); transition: transform var(--transition); }
+.model-selector-btn.open .chevron { transform: rotate(180deg); }
+.model-drop {
+  position: absolute; top: calc(100% + 8px); left: 0;
+  background: #2a2a2a; border: 1px solid var(--border);
+  border-radius: 10px; min-width: 220px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  z-index: 100; overflow: hidden;
+  display: none;
+}
+.model-drop.open { display: block; }
+.model-opt {
+  padding: 10px 14px;
+  cursor: pointer; font-size: .83rem; color: var(--text2);
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background var(--transition);
+}
+.model-opt:hover { background: var(--hover2); color: var(--text); }
+.model-opt.sel { color: var(--green); }
+.model-opt .mo-badge {
+  font-size: .65rem; padding: 2px 8px; border-radius: 10px;
+  background: var(--hover2); color: var(--text3);
+}
+.model-opt.sel .mo-badge { background: var(--green-light); color: var(--green); }
+
+.tb-spacer { flex: 1; }
+.tb-actions { display: flex; gap: 6px; }
+.tb-btn {
+  padding: 6px 12px; border-radius: 8px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: .78rem; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+  transition: all var(--transition);
+}
+.tb-btn:hover { background: var(--hover); border-color: var(--border2); color: var(--text); }
+.tb-btn.on { background: var(--green-light); border-color: rgba(16,163,127,.3); color: var(--green); }
+.tb-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* ═══════════════════════════════════════
+   MESSAGES
+═══════════════════════════════════════ */
+.messages { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+.msgs-inner { max-width: 760px; margin: 0 auto; padding: 28px 24px 16px; }
+
+/* Welcome */
+.welcome {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 64px 20px 40px; text-align: center;
+}
+.w-icon {
+  width: 56px; height: 56px; border-radius: 16px;
+  background: var(--green); margin-bottom: 24px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 24px var(--green-glow);
+  animation: iconFloat 3s ease-in-out infinite;
+}
+@keyframes iconFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+.w-icon svg { width: 26px; height: 26px; }
+.welcome h1 {
+  font-size: 2rem; font-weight: 600; letter-spacing: -.025em;
+  color: var(--text); margin-bottom: 10px;
+  font-family: 'DM Sans', sans-serif;
+}
+.welcome p { font-size: .92rem; color: var(--text2); max-width: 400px; line-height: 1.6; margin-bottom: 36px; }
+
+/* Suggestion cards */
+.sug-row { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; max-width: 540px; width: 100%; }
+.sug {
+  background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+  cursor: pointer; text-align: left;
+  transition: all var(--transition);
+}
+.sug:hover { background: var(--hover2); border-color: var(--border2); transform: translateY(-1px); }
+.sug-title { font-size: .83rem; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.sug-sub { font-size: .75rem; color: var(--text3); line-height: 1.45; }
+
+/* ── Message rows ── */
+.msg-row { padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.msg-row:last-child { border-bottom: none; }
+.msg-row.user { background: transparent; }
+.msg-row.ai   { background: transparent; }
+
+.msg-inner { display: flex; gap: 16px; max-width: 100%; }
+
+/* Avatars */
+.avatar {
+  width: 34px; height: 34px; border-radius: 8px;
+  flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; font-weight: 700;
+}
+.avatar.ai {
+  background: var(--green);
+  box-shadow: 0 2px 8px var(--green-glow);
+}
+.avatar.ai svg { width: 18px; height: 18px; }
+.avatar.user {
+  background: #5b5fc7;
+  color: white; font-size: .8rem; font-weight: 600;
+  letter-spacing: .02em;
+}
+
+/* Message content */
+.msg-body { flex: 1; min-width: 0; }
+.msg-name {
+  font-size: .78rem; font-weight: 600; color: var(--text);
+  margin-bottom: 8px; letter-spacing: .01em;
+}
+.msg-text {
+  font-size: .92rem; line-height: 1.78; color: var(--text);
+  word-break: break-word;
+}
+/* User bubble style */
+.msg-row.user .msg-text {
+  background: var(--user-bg);
+  border-radius: 18px 18px 4px 18px;
+  padding: 13px 18px;
+  display: inline-block;
+  white-space: pre-wrap;
+}
+.msg-row.user .msg-body { display: flex; flex-direction: column; align-items: flex-end; }
+.msg-row.user .msg-inner { flex-direction: row-reverse; }
+.msg-row.user .msg-name { text-align: right; }
+
+/* AI markdown */
+.msg-text.md p { margin-bottom: .8em; }
+.msg-text.md p:last-child { margin-bottom: 0; }
+.msg-text.md h1,.msg-text.md h2,.msg-text.md h3,.msg-text.md h4 {
+  font-weight: 600; margin: 1.2em 0 .5em; color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+}
+.msg-text.md h1{font-size:1.4rem} .msg-text.md h2{font-size:1.2rem}
+.msg-text.md h3{font-size:1.05rem} .msg-text.md h4{font-size:.95rem}
+.msg-text.md ul,.msg-text.md ol { padding-left: 1.5em; margin-bottom: .8em; }
+.msg-text.md li { margin-bottom: .35em; line-height: 1.65; }
+.msg-text.md strong { font-weight: 600; color: var(--text); }
+.msg-text.md em { color: var(--text2); font-style: italic; }
+.msg-text.md a { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+.msg-text.md blockquote {
+  border-left: 3px solid var(--border2);
+  padding: 8px 14px; color: var(--text2);
+  background: var(--input-bg); border-radius: 0 8px 8px 0;
+  margin: .8em 0;
+}
+.msg-text.md hr { border: none; border-top: 1px solid var(--border); margin: 1em 0; }
+.msg-text.md table { width: 100%; border-collapse: collapse; margin: .8em 0; font-size: .85em; }
+.msg-text.md th,.msg-text.md td { padding: 8px 12px; border: 1px solid var(--border); }
+.msg-text.md th { background: var(--input-bg); font-weight: 600; }
+.msg-text.md :not(pre) > code {
+  font-family: 'JetBrains Mono', monospace; font-size: .82em;
+  background: rgba(255,255,255,.08); border-radius: 4px;
+  padding: 2px 6px; color: #e5c07b;
+}
+
+/* Code blocks */
+.msg-text.md pre {
+  margin: .8em 0; border-radius: 10px;
+  border: 1px solid var(--border); overflow: hidden;
+  background: #0d1117;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.code-lang { font-size: .7rem; color: #8b949e; font-family: 'JetBrains Mono', monospace; }
+.code-copy {
+  background: none; border: 1px solid rgba(255,255,255,.1);
+  border-radius: 5px; padding: 3px 10px;
+  color: #8b949e; font-size: .7rem; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all var(--transition);
+}
+.code-copy:hover { border-color: rgba(255,255,255,.2); color: #c9d1d9; }
+.code-copy.ok { border-color: rgba(16,163,127,.4); color: var(--green); }
+.msg-text.md pre code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .82em; display: block;
+  padding: 14px 16px; overflow-x: auto;
+  line-height: 1.65; background: none !important;
+  border: none !important; border-radius: 0 !important;
+  color: inherit !important;
+}
+
+/* Streaming cursor */
+.cursor {
+  display: inline-block; width: 2px; height: 1em;
+  background: var(--text); margin-left: 1px;
+  vertical-align: text-bottom; border-radius: 1px;
+  animation: blink .7s steps(1) infinite;
+}
+@keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+/* Typing dots */
+.typing-dots { display: flex; gap: 5px; padding: 4px 0; }
+.td { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); animation: td .9s ease-in-out infinite; }
+.td:nth-child(2){animation-delay:.18s} .td:nth-child(3){animation-delay:.36s}
+@keyframes td { 0%,60%,100%{transform:scale(.8);opacity:.4} 30%{transform:scale(1.1);opacity:1} }
+
+/* Message actions */
+.msg-actions {
+  display: flex; gap: 2px; margin-top: 10px;
+  opacity: 0; transition: opacity var(--transition);
+}
+.msg-row:hover .msg-actions { opacity: 1; }
+.msg-row.user .msg-actions { justify-content: flex-end; }
+.ma {
+  padding: 5px 9px; border-radius: 6px;
+  background: none; border: none;
+  color: var(--text3); font-size: .75rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer; display: flex; align-items: center; gap: 4px;
+  transition: background var(--transition), color var(--transition);
+}
+.ma:hover { background: var(--hover2); color: var(--text2); }
+.ma.liked { color: var(--green); }
+.ma.disliked { color: var(--red); }
+.token-badge { font-size: .7rem; color: var(--text3); padding: 5px 2px; }
+
+/* ═══════════════════════════════════════
+   INPUT AREA — ChatGPT style
+═══════════════════════════════════════ */
+.input-area {
+  padding: 12px 20px 20px;
+  background: var(--main-bg);
+  flex-shrink: 0; position: relative;
+}
+.input-area::before {
+  content: '';
+  position: absolute; top: -40px; left: 0; right: 0; height: 40px;
+  background: linear-gradient(to top, var(--main-bg), transparent);
+  pointer-events: none;
+}
+.input-wrap { max-width: 760px; margin: 0 auto; }
+
+/* Attachment strip */
+.att-strip { display: none; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.att-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: 7px; padding: 5px 10px; font-size: .78rem; color: var(--text2);
+}
+.att-chip button { background: none; border: none; color: var(--text3); cursor: pointer; font-size: .7rem; transition: color var(--transition); }
+.att-chip button:hover { color: var(--red); }
+
+/* The main input box */
+.inp-box {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  overflow: hidden;
+}
+.inp-box:focus-within {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 1px var(--border2);
+}
+
+/* Textarea row */
+.inp-top { display: flex; align-items: flex-end; gap: 6px; padding: 12px 12px 10px 16px; }
+textarea#chatInput {
+  flex: 1; background: none; border: none; outline: none;
+  font-family: 'DM Sans', sans-serif; font-size: .92rem;
+  line-height: 1.6; color: var(--text); resize: none;
+  min-height: 24px; max-height: 240px;
+  scrollbar-width: none; padding: 1px 0;
+}
+textarea#chatInput::-webkit-scrollbar { display: none; }
+textarea#chatInput::placeholder { color: var(--text3); }
+
+/* Input buttons */
+.inp-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.ib-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text2); display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition), color var(--transition);
+}
+.ib-icon:hover { background: var(--hover2); color: var(--text); }
+.ib-icon.voice-on { background: rgba(239,68,68,.15); color: var(--red); animation: pulseRed 1s ease-in-out infinite; }
+@keyframes pulseRed { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.3)} 50%{box-shadow:0 0 0 5px rgba(239,68,68,0)} }
+.ib-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.send-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: var(--green); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); flex-shrink: 0;
+  box-shadow: 0 2px 8px var(--green-glow);
+}
+.send-btn:hover { background: #0d8f6f; transform: scale(1.06); }
+.send-btn:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+.send-btn svg { width: 16px; height: 16px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.stop-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3);
+  cursor: pointer; display: none; align-items: center; justify-content: center;
+  transition: all var(--transition); flex-shrink: 0;
+}
+.stop-btn:hover { background: rgba(239,68,68,.2); }
+.stop-btn svg { width: 12px; height: 12px; fill: var(--red); }
+
+/* Bottom bar */
+.inp-bottom {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--border);
+}
+.inp-pills { display: flex; gap: 6px; }
+.pill {
+  padding: 4px 10px; border-radius: 20px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text3); font-family: 'DM Sans', sans-serif;
+  font-size: .72rem; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: all var(--transition);
+}
+.pill:hover { border-color: var(--border2); color: var(--text2); }
+.pill.on { background: var(--green-light); border-color: rgba(16,163,127,.3); color: var(--green); }
+.pill svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; }
+.inp-meta { font-size: .7rem; color: var(--text3); }
+kbd {
+  background: var(--hover2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 5px;
+  font-size: .65rem; font-family: 'JetBrains Mono', monospace;
+  color: var(--text3);
+}
+.char-count { font-size: .7rem; color: var(--text3); }
+
+/* ═══════════════════════════════════════
+   API KEY MODAL
+═══════════════════════════════════════ */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(10px);
+  z-index: 500;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.modal {
+  background: #2a2a2a; border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 420px;
+  padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  animation: mIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes mIn { from{opacity:0;transform:scale(.92) translateY(12px)} to{opacity:1;transform:none} }
+.m-logo {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--green); margin-bottom: 18px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px var(--green-glow);
+}
+.m-logo svg { width: 22px; height: 22px; }
+.modal h2 {
+  font-size: 1.25rem; font-weight: 600; margin-bottom: 8px;
+  letter-spacing: -.02em;
+}
+.modal p { font-size: .85rem; color: var(--text2); line-height: 1.6; margin-bottom: 20px; }
+.m-label { font-size: .78rem; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; }
+.m-inp-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.m-inp {
+  flex: 1; padding: 10px 14px;
+  background: var(--main-bg); border: 1.5px solid var(--border);
+  border-radius: 9px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: .82rem;
+  outline: none; transition: border-color var(--transition);
+}
+.m-inp:focus { border-color: var(--green); }
+.m-inp::placeholder { font-family: 'DM Sans', sans-serif; color: var(--text3); }
+.m-eye {
+  width: 42px; background: var(--main-bg); border: 1.5px solid var(--border);
+  border-radius: 9px; cursor: pointer; color: var(--text3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); flex-shrink: 0;
+}
+.m-eye:hover { border-color: var(--border2); color: var(--text2); }
+.m-eye svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+.m-hint { font-size: .75rem; color: var(--text3); margin-bottom: 20px; }
+.m-hint a { color: var(--green); }
+.m-warn {
+  background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25);
+  border-radius: 8px; padding: 10px 14px;
+  font-size: .78rem; color: #fca5a5;
+  margin-bottom: 16px; display: none;
+}
+.m-btns { display: flex; gap: 8px; }
+.m-demo {
+  flex: 1; padding: 11px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text2);
+  font-family: 'DM Sans', sans-serif; font-size: .85rem; font-weight: 500;
+  cursor: pointer; transition: all var(--transition);
+}
+.m-demo:hover { background: var(--hover); color: var(--text); }
+.m-go {
+  flex: 2; padding: 11px;
+  background: var(--green); border: none;
+  border-radius: 10px; color: white;
+  font-family: 'DM Sans', sans-serif; font-size: .85rem; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+  box-shadow: 0 2px 12px var(--green-glow);
+}
+.m-go:hover { background: #0d8f6f; }
+
+/* ═══════════════════════════════════════
+   SETTINGS PANEL
+═══════════════════════════════════════ */
+.set-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5); backdrop-filter: blur(8px);
+  z-index: 200; display: none; align-items: center; justify-content: center;
+}
+.set-overlay.open { display: flex; }
+.set-panel {
+  background: #2a2a2a; border: 1px solid var(--border);
+  border-radius: 16px; width: 480px; max-width: 94vw;
+  max-height: 88vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  animation: mIn .2s ease;
+}
+.set-head {
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.set-head h2 { font-size: 1rem; font-weight: 600; }
+.set-close {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer; font-size: .8rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.set-close:hover { background: var(--hover2); }
+.set-body { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 22px; }
+.sg { display: flex; flex-direction: column; gap: 10px; }
+.sg-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); }
+.sg-desc { font-size: .8rem; color: var(--text3); line-height: 1.5; margin-top: -6px; }
+.sg-ta {
+  width: 100%; padding: 10px 12px;
+  background: var(--main-bg); border: 1.5px solid var(--border);
+  border-radius: 9px; color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: .85rem;
+  line-height: 1.6; resize: vertical; min-height: 80px; outline: none;
+}
+.sg-ta:focus { border-color: var(--green); }
+.sg-range-row { display: flex; align-items: center; gap: 10px; }
+input[type=range].sg-range {
+  flex: 1; -webkit-appearance: none; height: 4px;
+  background: var(--border); border-radius: 4px; cursor: pointer; outline: none;
+}
+input[type=range].sg-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--green); border: 2px solid var(--main-bg);
+  box-shadow: 0 1px 6px var(--green-glow); cursor: pointer;
+}
+.sg-rval { font-size: .8rem; color: var(--green); min-width: 32px; text-align: right; font-weight: 500; }
+.sg-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sg-ti { flex: 1; }
+.sg-ti-t { font-size: .85rem; font-weight: 500; color: var(--text); }
+.sg-ti-s { font-size: .78rem; color: var(--text3); margin-top: 2px; }
+.tgl { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.tgl input { opacity: 0; position: absolute; }
+.tgl-track {
+  position: absolute; inset: 0;
+  background: var(--border2); border-radius: 11px;
+  cursor: pointer; transition: background var(--transition);
+}
+.tgl-track::before {
+  content: ''; position: absolute;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: white; left: 3px; top: 3px;
+  transition: transform var(--transition);
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.tgl input:checked + .tgl-track { background: var(--green); }
+.tgl input:checked + .tgl-track::before { transform: translateX(18px); }
+.sg-save {
+  padding: 11px; border-radius: 10px;
+  background: var(--green); border: none; color: white;
+  font-family: 'DM Sans', sans-serif; font-size: .88rem; font-weight: 600;
+  cursor: pointer; transition: opacity var(--transition);
+  box-shadow: 0 2px 10px var(--green-glow);
+}
+.sg-save:hover { opacity: .88; }
+
+/* ═══════════════════════════════════════
+   TOAST
+═══════════════════════════════════════ */
+.toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.t-item {
+  padding: 10px 16px; background: #333; border: 1px solid var(--border);
+  border-radius: 9px; color: var(--text); font-size: .82rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  animation: tIn .2s ease; display: flex; align-items: center; gap: 8px;
+}
+.t-item.ok  { border-color: rgba(16,163,127,.4); color: #4ade80; }
+.t-item.err { border-color: rgba(239,68,68,.4); color: #f87171; }
+@keyframes tIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:768px) {
+  .sidebar { position: fixed; top: 0; bottom: 0; left: 0; }
+  .sidebar:not(.mob-open) { transform: translateX(-100%); }
+  .sug-row { grid-template-columns: 1fr; max-width: 340px; }
+  .tb-btn span { display: none; }
+  .msgs-inner { padding: 20px 14px 12px; }
+}
+@media(max-width:480px) {
+  .tb-actions .tb-btn:nth-child(3) { display: none; }
+  .msg-row.user .msg-text { padding: 11px 14px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ API KEY MODAL ══════════════ -->
+<div class="modal-bg" id="apiModal">
+  <div class="modal">
+    <div class="m-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/></svg>
+    </div>
+    <h2>Welcome to AuraAI</h2>
+    <p>Enter your Anthropic API key to get started. Your key stays in your browser — never shared with anyone.</p>
+    <div class="m-warn" id="mWarn"></div>
+    <label class="m-label">API Key</label>
+    <div class="m-inp-row">
+      <input class="m-inp" id="keyInput" type="password" placeholder="sk-ant-api03-…"/>
+      <button class="m-eye" id="eyeToggle">
+        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <p class="m-hint">Don't have a key? Get one free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com →</a></p>
+    <div class="m-btns">
+      <button class="m-demo" id="demoBtn">Try Demo</button>
+      <button class="m-go"   id="goBtn">Start Chatting →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l2.5 2.5"/></svg>
+      </div>
+      AuraAI
+    </div>
+    <button class="sb-icon-btn" id="sbToggle" title="Close sidebar">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <button class="sb-new" id="newChatBtn">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New Chat
+  </button>
+
+  <div class="sb-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="sbSearch" placeholder="Search…"/>
+  </div>
+
+  <div class="sb-label">Recent</div>
+  <div class="sb-list" id="sbList"></div>
+
+  <div class="sb-footer">
+    <button class="sb-foot-btn" id="settingsFootBtn">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </button>
+    <button class="sb-foot-btn" id="changeKeyFootBtn">
+      <svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      Change API Key
+    </button>
+    <div class="sb-version">AuraAI v1.0 · Powered by Anthropic</div>
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <button class="tb-toggle" id="sbOpenBtn" title="Toggle sidebar">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- Model dropdown -->
+    <div style="position:relative">
+      <button class="model-selector-btn" id="modelBtn">
+        <span id="modelLabel">GPT-4o style · Sonnet 4</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="model-drop" id="modelDrop">
+        <div class="model-opt sel" data-v="claude-sonnet-4-20250514" data-n="Sonnet 4">Claude Sonnet 4 <span class="mo-badge">Best</span></div>
+        <div class="model-opt" data-v="claude-opus-4-5" data-n="Opus 4.5">Claude Opus 4.5 <span class="mo-badge">Powerful</span></div>
+        <div class="model-opt" data-v="claude-haiku-4-5-20251001" data-n="Haiku 4.5">Claude Haiku 4.5 <span class="mo-badge">Fast</span></div>
+      </div>
+    </div>
+
+    <div class="tb-spacer"></div>
+
+    <div class="tb-actions">
+      <button class="tb-btn on" id="streamBtn">
+        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>Stream</span>
+      </button>
+      <button class="tb-btn" id="exportBtn">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export</span>
+      </button>
+      <button class="tb-btn" id="settingsBtn">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Settings</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" id="messages">
+    <div class="msgs-inner" id="msgsInner"></div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <div class="input-wrap">
+      <div class="att-strip" id="attStrip"></div>
+      <div class="inp-box">
+        <div class="inp-top">
+          <textarea id="chatInput" rows="1" placeholder="Message AuraAI…"></textarea>
+          <div class="inp-btns">
+            <button class="ib-icon" id="attachBtn" title="Attach file">
+              <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <button class="ib-icon" id="voiceBtn" title="Voice input">
+              <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <button class="send-btn" id="sendBtn">
+              <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+            <button class="stop-btn" id="stopBtn">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="inp-bottom">
+          <div class="inp-pills">
+            <button class="pill" id="wsPill">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              Web Search
+            </button>
+            <button class="pill" id="thinkPill">🧠 Deep Think</button>
+            <button class="pill" id="codeModePill">
+              <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              Code Mode
+            </button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span class="char-count" id="charCnt">0</span>
+            <span class="inp-meta"><kbd>↵</kbd> send · <kbd>⇧↵</kbd> newline</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ══════════════ SETTINGS ══════════════ -->
+<div class="set-overlay" id="setOverlay">
+  <div class="set-panel">
+    <div class="set-head">
+      <h2>⚙️ Settings</h2>
+      <button class="set-close" id="setClose">✕</button>
+    </div>
+    <div class="set-body">
+      <div class="sg">
+        <span class="sg-label">System Prompt</span>
+        <p class="sg-desc">Define personality and behavior of AuraAI.</p>
+        <textarea class="sg-ta" id="sysP" rows="4">You are AuraAI, a highly intelligent, helpful, and friendly AI assistant — similar to ChatGPT. You are clear, concise, and accurate. You use markdown formatting when it improves readability. You're great at coding, writing, analysis, math, and creative tasks.</textarea>
+      </div>
+      <div class="sg">
+        <span class="sg-label">Temperature — <span id="tempLbl" style="color:var(--green)">0.7</span></span>
+        <div class="sg-range-row">
+          <span style="font-size:.72rem;color:var(--text3)">Precise</span>
+          <input type="range" class="sg-range" id="tempR" min="0" max="1" step="0.05" value="0.7"/>
+          <span style="font-size:.72rem;color:var(--text3)">Creative</span>
+        </div>
+      </div>
+      <div class="sg">
+        <span class="sg-label">Max Tokens — <span id="maxLbl" style="color:var(--green)">2048</span></span>
+        <div class="sg-range-row">
+          <span style="font-size:.72rem;color:var(--text3)">Short</span>
+          <input type="range" class="sg-range" id="maxR" min="256" max="8192" step="256" value="2048"/>
+          <span style="font-size:.72rem;color:var(--text3)">Long</span>
+        </div>
+      </div>
+      <div class="sg">
+        <div class="sg-toggle-row">
+          <div class="sg-ti"><div class="sg-ti-t">Markdown Rendering</div><div class="sg-ti-s">Format AI responses with markdown.</div></div>
+          <label class="tgl"><input type="checkbox" id="mdTgl" checked/><span class="tgl-track"></span></label>
+        </div>
+      </div>
+      <div class="sg">
+        <div class="sg-toggle-row">
+          <div class="sg-ti"><div class="sg-ti-t">Show Token Count</div><div class="sg-ti-s">Display token usage after responses.</div></div>
+          <label class="tgl"><input type="checkbox" id="tkTgl" checked/><span class="tgl-track"></span></label>
+        </div>
+      </div>
+      <div class="sg">
+        <div class="sg-toggle-row">
+          <div class="sg-ti"><div class="sg-ti-t">Sound Effects</div><div class="sg-ti-s">Subtle audio on send/receive.</div></div>
+          <label class="tgl"><input type="checkbox" id="sfxTgl"/><span class="tgl-track"></span></label>
+        </div>
+      </div>
+      <button class="sg-save" id="sgSave">💾 Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toasts"></div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileIn" multiple accept="image/*,.pdf,.txt,.md,.js,.ts,.py,.html,.css,.json,.csv" style="display:none"/>
+
+<script>
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+const APP = {
+  key:        localStorage.getItem('aura_key') || '',
+  demo:       false,
+  model:      'claude-sonnet-4-20250514',
+  modelName:  'Sonnet 4',
+  sys:        'You are AuraAI, a highly intelligent, helpful, and friendly AI assistant — similar to ChatGPT. You are clear, concise, and accurate. You use markdown formatting when it improves readability. You\'re great at coding, writing, analysis, math, and creative tasks.',
+  temp:       0.7,
+  maxTok:     2048,
+  stream:     true,
+  webSearch:  false,
+  deepThink:  false,
+  codeMode:   false,
+  renderMd:   true,
+  showTok:    true,
+  sfx:        false,
+  convos:     [],
+  activeId:   null,
+  generating: false,
+  ctrl:       null,
+  files:      [],
+  tokens:     0,
+};
+
+// ════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════
+const $  = id => document.getElementById(id);
+const esc = s  => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+
+function toast(msg, type='') {
+  const el = document.createElement('div');
+  el.className = `t-item ${type}`;
+  el.textContent = msg;
+  $('toasts').appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .25s'; setTimeout(()=>el.remove(),250); }, 2600);
+}
+
+function beep(t) {
+  if (!APP.sfx) return;
+  try {
+    const ctx = new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = t==='s'?700:500;
+    g.gain.setValueAtTime(.05,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.14);
+    o.start(); o.stop(ctx.currentTime+.14);
+  }catch(e){}
+}
+
+function resize() {
+  const el = $('chatInput');
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 240)+'px';
+}
+
+function scrollDown() { $('messages').scrollTo({top:$('messages').scrollHeight,behavior:'smooth'}); }
+
+// ════════════════════════════════════════
+//  API KEY MODAL
+// ════════════════════════════════════════
+if (!APP.key) $('apiModal').style.display = 'flex';
+else { $('apiModal').style.display = 'none'; boot(); }
+
+$('eyeToggle').onclick = () => {
+  const i=$('keyInput'); i.type = i.type==='password'?'text':'password';
+};
+$('goBtn').onclick = () => {
+  const k = $('keyInput').value.trim();
+  const w = $('mWarn');
+  if (!k) { w.style.display='block'; w.textContent='Please enter your API key.'; return; }
+  if (!k.startsWith('sk-')) { w.style.display='block'; w.textContent='Key should start with "sk-".'; return; }
+  w.style.display='none';
+  APP.key = k; localStorage.setItem('aura_key', k);
+  $('apiModal').style.display='none'; boot();
+  toast('API key saved ✓','ok');
+};
+$('demoBtn').onclick = () => {
+  APP.demo=true; $('apiModal').style.display='none'; boot();
+  toast('Demo mode active');
+};
+
+// ════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════
+function boot() { showWelcome(); renderSb(); }
+
+// ════════════════════════════════════════
+//  WELCOME
+// ════════════════════════════════════════
+function showWelcome() {
+  $('msgsInner').innerHTML = `
+  <div class="welcome">
+    <div class="w-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l2.5 2.5"/></svg>
+    </div>
+    <h1>How can I help you today?</h1>
+    <p>I'm AuraAI — your smart assistant for writing, coding, analysis, and more.</p>
+    <div class="sug-row">
+      <div class="sug" data-p="Explain the difference between machine learning, deep learning, and AI in simple terms.">
+        <div class="sug-title">💡 Explain a concept</div>
+        <div class="sug-sub">ML vs Deep Learning vs AI</div>
+      </div>
+      <div class="sug" data-p="Write a complete REST API in Node.js with Express for a todo app. Include CRUD operations.">
+        <div class="sug-title">💻 Write code</div>
+        <div class="sug-sub">Node.js REST API with Express</div>
+      </div>
+      <div class="sug" data-p="Write a professional email to my boss asking for a salary raise. Make it confident but respectful.">
+        <div class="sug-title">✉️ Draft an email</div>
+        <div class="sug-sub">Salary raise request email</div>
+      </div>
+      <div class="sug" data-p="Give me a step-by-step 30-day plan to learn Python programming from scratch.">
+        <div class="sug-title">📅 Make a plan</div>
+        <div class="sug-sub">30-day Python learning roadmap</div>
+      </div>
+    </div>
+  </div>`;
+  $('msgsInner').querySelectorAll('.sug').forEach(s => {
+    s.onclick = () => { $('chatInput').value=s.dataset.p; resize(); sendMsg(); };
+  });
+}
+
+// ════════════════════════════════════════
+//  CONVERSATIONS
+// ════════════════════════════════════════
+function newConvo(title='New Chat') {
+  const c={id:uid(),title,msgs:[],ts:Date.now()};
+  APP.convos.unshift(c); return c;
+}
+function getConvo() { return APP.convos.find(c=>c.id===APP.activeId); }
+
+function setConvo(id) {
+  APP.activeId=id; renderSb();
+  const c=getConvo(); if(!c) return showWelcome();
+  $('msgsInner').innerHTML='';
+  c.msgs.forEach(m=>addMsgEl(m));
+  scrollDown();
+}
+
+function autoTitle(txt) {
+  const c=getConvo(); if(!c||c.title!=='New Chat') return;
+  c.title=txt.slice(0,50)+(txt.length>50?'…':'');
+  renderSb();
+}
+
+function renderSb(filter='') {
+  const list=filter?APP.convos.filter(c=>c.title.toLowerCase().includes(filter.toLowerCase())):APP.convos;
+  const sb=$('sbList'); sb.innerHTML='';
+  if(!list.length){ sb.innerHTML='<div style="padding:20px 12px;font-size:.8rem;color:var(--text3);text-align:center">No chats yet</div>'; return; }
+  list.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='sb-item'+(c.id===APP.activeId?' active':'');
+    d.innerHTML=`<span class="sb-item-ico">💬</span><span class="sb-item-txt">${esc(c.title)}</span><button class="sb-item-del" title="Delete">✕</button>`;
+    d.onclick=e=>{ if(!e.target.classList.contains('sb-item-del')) setConvo(c.id); };
+    d.querySelector('.sb-item-del').onclick=e=>{
+      e.stopPropagation();
+      APP.convos=APP.convos.filter(x=>x.id!==c.id);
+      if(APP.activeId===c.id){APP.activeId=null;showWelcome();}
+      renderSb();
+    };
+    sb.appendChild(d);
+  });
+}
+
+// ════════════════════════════════════════
+//  RENDER MESSAGE
+// ════════════════════════════════════════
+function addMsgEl(msg) {
+  const w=$('msgsInner').querySelector('.welcome');
+  if(w) w.remove();
+
+  const row=document.createElement('div');
+  row.className=`msg-row ${msg.role}`;
+  row.dataset.id=msg.id;
+
+  if(msg.role==='user') {
+    row.innerHTML=`
+    <div class="msg-inner">
+      <div class="avatar user">U</div>
+      <div class="msg-body">
+        <div class="msg-name">You</div>
+        <div class="msg-text">${esc(msg.content)}</div>
+        <div class="msg-actions">
+          <button class="ma" onclick="cpMsg('${msg.id}')">⎘ Copy</button>
+          <button class="ma" onclick="editMsg('${msg.id}')">✏️ Edit</button>
+          <button class="ma" onclick="delMsg('${msg.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    const cont = msg.content ? mkContent(msg.content) : `<div class="typing-dots"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+    const tok = (APP.showTok&&msg.tokens) ? `<div class="token-badge">↳ ${msg.tokens.toLocaleString()} tokens</div>` : '';
+    row.innerHTML=`
+    <div class="msg-inner">
+      <div class="avatar ai">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l2 2"/></svg>
+      </div>
+      <div class="msg-body">
+        <div class="msg-name">AuraAI <span style="font-size:.7rem;color:var(--text3);font-weight:400">${APP.modelName}</span></div>
+        <div class="msg-text md" id="mc-${msg.id}">${cont}</div>
+        ${tok}
+        <div class="msg-actions">
+          <button class="ma" onclick="cpMsg('${msg.id}')">⎘ Copy</button>
+          <button class="ma good" onclick="reactMsg(this,'👍')">👍</button>
+          <button class="ma bad"  onclick="reactMsg(this,'👎')">👎</button>
+          <button class="ma" onclick="regenMsg('${msg.id}')">↺ Retry</button>
+          <button class="ma" onclick="delMsg('${msg.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`;
+    setTimeout(()=>fixCode(row),0);
+  }
+  $('msgsInner').appendChild(row);
+  scrollDown();
+  return row;
+}
+
+function mkContent(txt) {
+  if(!APP.renderMd) return `<p>${esc(txt).replace(/\n/g,'<br>')}</p>`;
+  marked.setOptions({breaks:true,gfm:true});
+  return marked.parse(txt);
+}
+
+function fixCode(el) {
+  el.querySelectorAll('pre').forEach(pre=>{
+    if(pre.querySelector('.code-header')) return;
+    const code=pre.querySelector('code');
+    if(!code) return;
+    const lang=(code.className.match(/language-(\w+)/)||[])[1]||'plaintext';
+    const hdr=document.createElement('div');
+    hdr.className='code-header';
+    const cpBtn=document.createElement('button');
+    cpBtn.className='code-copy'; cpBtn.textContent='Copy';
+    cpBtn.onclick=()=>{
+      navigator.clipboard.writeText(code.textContent).then(()=>{
+        cpBtn.textContent='✓ Copied'; cpBtn.classList.add('ok');
+        setTimeout(()=>{cpBtn.textContent='Copy';cpBtn.classList.remove('ok');},1800);
+      });
+    };
+    hdr.innerHTML=`<span class="code-lang">${lang}</span>`;
+    hdr.appendChild(cpBtn);
+    pre.insertBefore(hdr,pre.firstChild);
+    try{if(window.hljs)hljs.highlightElement(code);}catch(e){}
+  });
+}
+
+// ════════════════════════════════════════
+//  MSG ACTIONS
+// ════════════════════════════════════════
+function cpMsg(id){const c=getConvo();if(!c)return;const m=c.msgs.find(x=>x.id===id);if(!m)return;navigator.clipboard.writeText(m.content).then(()=>toast('Copied ✓','ok'));}
+function reactMsg(btn,r){btn.classList.add(r==='👍'?'liked':'disliked');btn.textContent=r;toast(r==='👍'?'Thanks! 👍':'Got it 👎');}
+function delMsg(id){const c=getConvo();if(!c)return;c.msgs=c.msgs.filter(m=>m.id!==id);document.querySelector(`.msg-row[data-id="${id}"]`)?.remove();}
+function editMsg(id){
+  const c=getConvo();if(!c)return;
+  const m=c.msgs.find(x=>x.id===id);if(!m)return;
+  $('chatInput').value=m.content; resize(); $('chatInput').focus();
+  const idx=c.msgs.findIndex(x=>x.id===id);
+  c.msgs=c.msgs.slice(0,idx);
+  document.querySelectorAll('.msg-row').forEach(r=>r.remove());
+  c.msgs.forEach(m=>addMsgEl(m));
+}
+function regenMsg(id){
+  const c=getConvo();if(!c)return;
+  const idx=c.msgs.findIndex(m=>m.id===id);if(idx<0)return;
+  const uMsg=c.msgs[idx-1];
+  c.msgs=c.msgs.slice(0,idx);
+  document.querySelector(`.msg-row[data-id="${id}"]`)?.remove();
+  if(uMsg) callAI(c);
+}
+
+// ════════════════════════════════════════
+//  SEND
+// ════════════════════════════════════════
+async function sendMsg() {
+  const txt=$('chatInput').value.trim();
+  if(!txt&&!APP.files.length) return;
+  if(APP.generating) return;
+
+  let c=getConvo();
+  if(!c){
+    c=newConvo(); APP.activeId=c.id; renderSb();
+    $('msgsInner').innerHTML='';
+  }
+
+  const uMsg={id:uid(),role:'user',content:txt,ts:Date.now()};
+  c.msgs.push(uMsg); addMsgEl(uMsg); autoTitle(txt);
+  $('chatInput').value=''; resize(); $('charCnt').textContent='0';
+  clearFiles(); beep('s');
+  await callAI(c);
+}
+
+// ════════════════════════════════════════
+//  CALL AI
+// ════════════════════════════════════════
+async function callAI(conv) {
+  APP.generating=true;
+  $('sendBtn').style.display='none';
+  $('stopBtn').style.display='flex';
+
+  const aiMsg={id:uid(),role:'ai',content:'',ts:Date.now(),tokens:0};
+  conv.msgs.push(aiMsg);
+  const row=addMsgEl(aiMsg);
+  const mc=document.getElementById(`mc-${aiMsg.id}`);
+
+  const history=conv.msgs
+    .filter(m=>(m.role==='user'||m.role==='ai')&&m.id!==aiMsg.id&&m.content)
+    .map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content}));
+
+  // DEMO MODE
+  if(APP.demo){
+    const demos=[
+      `# Welcome to AuraAI! 🎉\n\nThis is **demo mode** — responses are simulated.\n\nTo use real AI, click **Change API Key** and enter your Anthropic key.\n\n## What I can do:\n- 💬 Natural conversation\n- 💻 Code in any language\n- ✍️ Writing & editing\n- 📊 Data analysis\n- 🧮 Math & science\n\n\`\`\`javascript\nconsole.log("Hello from AuraAI!");\n\`\`\``,
+      `I'm running in **demo mode** right now.\n\nGet a real API key from [console.anthropic.com](https://console.anthropic.com) to unlock full AI capabilities!\n\nOnce connected, I can help with virtually anything — just ask.`,
+      `**Demo response** — real mode supports:\n\n1. Multi-turn conversations with memory\n2. Complex reasoning and analysis  \n3. Code generation and debugging\n4. Creative writing and storytelling\n5. Math, science, and research\n\nClick **Change API Key** to get started!`,
+    ];
+    const d=demos[Math.floor(Math.random()*demos.length)];
+    let i=0;
+    const iv=setInterval(()=>{
+      if(i>=d.length||!APP.generating){
+        clearInterval(iv);
+        aiMsg.content=d;
+        if(mc){mc.innerHTML=mkContent(d);fixCode(mc);}
+        finish(aiMsg,row,80);
+        return;
+      }
+      aiMsg.content+=d[i++];
+      if(mc) mc.innerHTML=mkContent(aiMsg.content)+'<span class="cursor"></span>';
+      scrollDown();
+    },8);
+    APP.ctrl={abort:()=>clearInterval(iv)};
+    return;
+  }
+
+  // REAL API
+  const sys=APP.sys+(APP.webSearch?'\n\nWeb search mode enabled.':'')+(APP.deepThink?'\n\nThink deeply and thoroughly before answering.':'')+(APP.codeMode?'\n\nFocus on code quality, best practices, and detailed explanations for all code-related responses.':'');
+
+  APP.ctrl=new AbortController();
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':APP.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:APP.model,max_tokens:APP.maxTok,temperature:APP.temp,system:sys,messages:history,stream:APP.stream}),
+      signal:APP.ctrl.signal,
+    });
+
+    if(!res.ok){
+      const err=await res.json().catch(()=>({error:{message:`HTTP ${res.status}`}}));
+      if(mc) mc.innerHTML=`<p style="color:var(--red)">⚠️ ${esc(err?.error?.message||'Error')}</p>`;
+      toast('Error: '+(err?.error?.message||res.status),'err');
+      finish(aiMsg,row,0); return;
+    }
+
+    if(APP.stream){
+      const reader=res.body.getReader(), dec=new TextDecoder();
+      let full='';
+      while(true){
+        const{done,value}=await reader.read();
+        if(done) break;
+        for(const line of dec.decode(value,{stream:true}).split('\n')){
+          if(!line.startsWith('data: ')) continue;
+          const d=line.slice(6).trim();
+          if(d==='[DONE]') break;
+          try{
+            const ev=JSON.parse(d);
+            if(ev.type==='content_block_delta'&&ev.delta?.type==='text_delta'){
+              full+=ev.delta.text; aiMsg.content=full;
+              if(mc) mc.innerHTML=mkContent(full)+'<span class="cursor"></span>';
+              scrollDown();
+            }
+            if(ev.type==='message_delta'&&ev.usage) aiMsg.tokens=ev.usage.output_tokens||0;
+          }catch(e){}
+        }
+      }
+      if(mc){mc.innerHTML=mkContent(full);fixCode(mc);}
+    } else {
+      const data=await res.json();
+      const txt=data.content?.[0]?.text||'';
+      aiMsg.content=txt; aiMsg.tokens=data.usage?.output_tokens||0;
+      if(mc){mc.innerHTML=mkContent(txt);fixCode(mc);}
+    }
+    finish(aiMsg,row,aiMsg.tokens); beep('r');
+  }catch(e){
+    if(e.name!=='AbortError'){
+      if(mc) mc.innerHTML=`<p style="color:var(--red)">⚠️ ${esc(e.message||'Network error')}</p>`;
+      toast('Network error','err');
+    } else toast('Stopped');
+    finish(aiMsg,row,0);
+  }
+}
+
+function finish(aiMsg,row,tok){
+  APP.generating=false; APP.ctrl=null;
+  $('sendBtn').style.display='flex'; $('stopBtn').style.display='none';
+  row.querySelectorAll('.cursor').forEach(c=>c.remove());
+  if(APP.showTok&&tok>0){
+    APP.tokens+=tok;
+    const body=row.querySelector('.msg-body');
+    if(body&&!body.querySelector('.token-badge')){
+      const tb=document.createElement('div');
+      tb.className='token-badge';
+      tb.textContent=`↳ ${tok.toLocaleString()} tokens`;
+      const acts=body.querySelector('.msg-actions');
+      if(acts) body.insertBefore(tb,acts); else body.appendChild(tb);
+    }
+  }
+  scrollDown();
+}
+
+// ════════════════════════════════════════
+//  INPUT EVENTS
+// ════════════════════════════════════════
+$('chatInput').addEventListener('input',()=>{ resize(); $('charCnt').textContent=$('chatInput').value.length; });
+$('chatInput').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} });
+$('sendBtn').onclick=sendMsg;
+$('stopBtn').onclick=()=>APP.ctrl?.abort();
+
+// Files
+$('attachBtn').onclick=()=>$('fileIn').click();
+$('fileIn').addEventListener('change',()=>{ Array.from($('fileIn').files).forEach(addFile); $('fileIn').value=''; });
+document.body.addEventListener('dragover',e=>e.preventDefault());
+document.body.addEventListener('drop',e=>{ e.preventDefault(); Array.from(e.dataTransfer.files).forEach(addFile); });
+function addFile(f){
+  APP.files.push(f);
+  const strip=$('attStrip'); strip.style.display='flex';
+  const c=document.createElement('div'); c.className='att-chip';
+  c.innerHTML=`📄 ${esc(f.name)} <button>✕</button>`;
+  c.querySelector('button').onclick=()=>{ APP.files=APP.files.filter(x=>x!==f); c.remove(); if(!APP.files.length) strip.style.display='none'; };
+  strip.appendChild(c); toast(`Attached: ${f.name}`,'ok');
+}
+function clearFiles(){ APP.files=[]; $('attStrip').innerHTML=''; $('attStrip').style.display='none'; }
+
+// Voice
+let recog=null;
+$('voiceBtn').onclick=()=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Not supported','err');return;}
+  if(recog){recog.stop();return;}
+  recog=new SR(); recog.continuous=false; recog.interimResults=true; recog.lang='en-US';
+  $('voiceBtn').classList.add('voice-on');
+  recog.onresult=e=>{ $('chatInput').value=Array.from(e.results).map(r=>r[0].transcript).join(''); resize(); };
+  recog.onend=()=>{ $('voiceBtn').classList.remove('voice-on'); recog=null; };
+  recog.onerror=()=>{ $('voiceBtn').classList.remove('voice-on'); recog=null; toast('Voice failed','err'); };
+  recog.start(); toast('🎤 Listening…');
+};
+
+// ════════════════════════════════════════
+//  SIDEBAR CONTROLS
+// ════════════════════════════════════════
+let sbOpen=true;
+$('sbToggle').onclick=()=>{ sbOpen=false; $('sidebar').classList.add('collapsed'); };
+$('sbOpenBtn').onclick=()=>{
+  if(window.innerWidth<=768){ $('sidebar').classList.toggle('mob-open'); return; }
+  sbOpen=!sbOpen;
+  $('sidebar').classList.toggle('collapsed',!sbOpen);
+};
+document.addEventListener('click',e=>{
+  if(window.innerWidth<=768&&!$('sidebar').contains(e.target)&&e.target!==$('sbOpenBtn'))
+    $('sidebar').classList.remove('mob-open');
+});
+$('newChatBtn').onclick=()=>{
+  const c=newConvo(); APP.activeId=c.id; renderSb();
+  $('msgsInner').innerHTML=''; showWelcome();
+  $('sidebar').classList.remove('mob-open');
+};
+$('sbSearch').oninput=()=>renderSb($('sbSearch').value);
+
+// ════════════════════════════════════════
+//  MODEL DROPDOWN
+// ════════════════════════════════════════
+$('modelBtn').onclick=e=>{ e.stopPropagation(); $('modelDrop').classList.toggle('open'); $('modelBtn').classList.toggle('open'); };
+document.querySelectorAll('.model-opt').forEach(o=>{
+  o.onclick=()=>{
+    APP.model=o.dataset.v; APP.modelName=o.dataset.n;
+    $('modelLabel').textContent=`GPT-4o style · ${APP.modelName}`;
+    document.querySelectorAll('.model-opt').forEach(x=>x.classList.remove('sel'));
+    o.classList.add('sel');
+    $('modelDrop').classList.remove('open'); $('modelBtn').classList.remove('open');
+    toast(`Model: ${APP.modelName}`,'ok');
+  };
+});
+document.addEventListener('click',()=>{ $('modelDrop').classList.remove('open'); $('modelBtn').classList.remove('open'); });
+
+// ════════════════════════════════════════
+//  TOPBAR ACTIONS
+// ════════════════════════════════════════
+$('streamBtn').classList.add('on');
+$('streamBtn').onclick=()=>{ APP.stream=!APP.stream; $('streamBtn').classList.toggle('on',APP.stream); toast(`Streaming ${APP.stream?'on':'off'}`); };
+
+['wsPill','thinkPill','codeModePill'].forEach(id=>{
+  const el=$(id), key=id==='wsPill'?'webSearch':id==='thinkPill'?'deepThink':'codeMode';
+  el.onclick=()=>{ APP[key]=!APP[key]; el.classList.toggle('on',APP[key]); toast(`${el.textContent.trim()} ${APP[key]?'on':'off'}`); };
+});
+
+$('exportBtn').onclick=()=>{
+  const c=getConvo(); if(!c||!c.msgs.length){toast('Nothing to export','err');return;}
+  const md=`# ${c.title}\n\n`+c.msgs.map(m=>`**${m.role==='ai'?'AuraAI':'You'}:**\n\n${m.content}`).join('\n\n---\n\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));
+  a.download=c.title.slice(0,40).replace(/\s+/g,'_')+'.md';
+  a.click(); toast('Exported ✓','ok');
+};
+
+// Change key
+[$('changeKeyFootBtn')].forEach(b=>{ b.onclick=()=>{ $('keyInput').value=''; $('mWarn').style.display='none'; $('apiModal').style.display='flex'; }; });
+
+// Settings
+[$('settingsBtn'),$('settingsFootBtn')].forEach(b=>{ b.onclick=()=>$('setOverlay').classList.add('open'); });
+$('setClose').onclick=()=>$('setOverlay').classList.remove('open');
+$('setOverlay').onclick=e=>{ if(e.target===$('setOverlay')) $('setOverlay').classList.remove('open'); };
+
+$('tempR').oninput=()=>$('tempLbl').textContent=$('tempR').value;
+$('maxR').oninput=()=>$('maxLbl').textContent=$('maxR').value;
+
+$('sgSave').onclick=()=>{
+  APP.sys=$('sysP').value;
+  APP.temp=parseFloat($('tempR').value);
+  APP.maxTok=parseInt($('maxR').value);
+  APP.renderMd=$('mdTgl').checked;
+  APP.showTok=$('tkTgl').checked;
+  APP.sfx=$('sfxTgl').checked;
+  $('setOverlay').classList.remove('open');
+  toast('Settings saved ✓','ok');
+};
+
+// ════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('newChatBtn').click();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='s'){e.preventDefault();$('exportBtn').click();}
+  if(e.key==='Escape') $('setOverlay').classList.remove('open');
+});
+</script>
+</body>
+</html>
